@@ -13,6 +13,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var numberOfBalls: SKLabelNode!
     var gameOverLabel: SKLabelNode!
     var balls = ["ballBlue", "ballCyan", "ballGreen", "ballGrey", "ballPurple", "ballRed", "ballYellow"]
+    var showParticles: Bool = true
     
     var score = 0 {
         didSet {
@@ -93,7 +94,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 let box = SKSpriteNode(color: UIColor(red: CGFloat.random(in: 0...1), green: CGFloat.random(in: 0...1), blue: CGFloat.random(in: 0...1), alpha: 1), size: size)
                 box.zRotation = CGFloat.random(in: 0...3)
                 box.position = location
-                
+                box.name = "box"
                 box.physicsBody = SKPhysicsBody(rectangleOf: box.size)
                 box.physicsBody?.isDynamic = false
                 addChild(box)
@@ -151,17 +152,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func collision(between ball: SKNode, object: SKNode) {
         if object.name == "good" {
+            showParticles = true
             destroy(ball: ball)
             score += 1
+            ballCount += 1
         } else if object.name == "bad" {
+            showParticles = true
             destroy(ball: ball)
             score -= 1
         }
+        
+        if object.name == "box" {
+            showParticles = false
+            destroy(ball: object)
+        }
     }
     func destroy(ball: SKNode) {
-        if let fireParticles = SKEmitterNode(fileNamed: "FireParticles") {
-            fireParticles.position = ball.position
-            addChild(fireParticles)
+        if showParticles {
+            if let fireParticles = SKEmitterNode(fileNamed: "FireParticles") {
+                fireParticles.position = ball.position
+                addChild(fireParticles)
+            }
         }
         ball.removeFromParent()
     }

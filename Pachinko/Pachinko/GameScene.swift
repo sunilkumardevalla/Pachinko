@@ -10,11 +10,21 @@ import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     var scoreLabel: SKLabelNode!
+    var numberOfBalls: SKLabelNode!
+    var gameOverLabel: SKLabelNode!
     var balls = ["ballBlue", "ballCyan", "ballGreen", "ballGrey", "ballPurple", "ballRed", "ballYellow"]
     
     var score = 0 {
         didSet {
             scoreLabel.text = "Score: \(score)"
+        }
+    }
+    var ballCount = 5 {
+        didSet {
+            numberOfBalls.text = "Balls Remaining: \(ballCount)"
+            if ballCount == 0 {
+                gameFinished(text: "Game Over")
+            }
         }
     }
     
@@ -42,6 +52,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.horizontalAlignmentMode = .right
         scoreLabel.position = CGPoint(x: 980, y: 700)
         addChild(scoreLabel)
+        
+        numberOfBalls = SKLabelNode(fontNamed: "Chalkduster")
+        numberOfBalls.text = "Balls Remaining: 5"
+        numberOfBalls.horizontalAlignmentMode = .center
+        numberOfBalls.position = CGPoint(x: 500, y: 700)
+        addChild(numberOfBalls)
         
         editLabel = SKLabelNode(fontNamed: "Chalkduster")
         editLabel.text = "Edit"
@@ -82,14 +98,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 box.physicsBody?.isDynamic = false
                 addChild(box)
             } else {
-                let ball = SKSpriteNode(imageNamed: balls.randomElement() ?? "ballRed")
-                ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width / 2.0)
-                ball.physicsBody?.restitution = 0.4
-                ball.physicsBody?.contactTestBitMask = ball.physicsBody?.collisionBitMask ?? 0
-                ball.position = location
-                ball.position.y = 680
-                ball.name = "ball"
-                addChild(ball)
+                if ballCount > 0 {
+                    let ball = SKSpriteNode(imageNamed: balls.randomElement() ?? "ballRed")
+                    ballCount -= 1
+                    ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width / 2.0)
+                    ball.physicsBody?.restitution = 0.4
+                    ball.physicsBody?.contactTestBitMask = ball.physicsBody?.collisionBitMask ?? 0
+                    ball.position = location
+                    ball.position.y = 680
+                    ball.name = "ball"
+                    addChild(ball)
+                }
             }
         }
     }
@@ -155,5 +174,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if nodeB.name == "ball" {
                 collision(between: nodeB, object: nodeA)
         }
+    }
+    
+    func reset() {
+        let newScene = GameScene(size: self.size)
+        newScene.scaleMode = self.scaleMode
+        let animation = SKTransition.fade(withDuration: 1.0)
+        self.view?.presentScene(newScene, transition: animation)
+    }
+    
+    func gameFinished(text: String) {
+        isUserInteractionEnabled = false
+        gameOverLabel = SKLabelNode(fontNamed: "Chalkduster")
+        gameOverLabel.text = text
+        gameOverLabel.position = CGPoint(x: 512, y: 384)
+        gameOverLabel.fontSize = 40
+        gameOverLabel.color = .red
+        addChild(gameOverLabel)
+        
+        let wait = SKAction.wait(forDuration: 1.5)
+        let action = SKAction.run { self.reset() }
+        run(SKAction.sequence([wait, action]))
     }
 }
